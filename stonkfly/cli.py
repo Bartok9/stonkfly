@@ -74,8 +74,14 @@ def main():
     if a.command == "status":
         import sqlite3
 
-        db = sqlite3.connect(f"file:{a.out / 'ledger.sqlite'}?mode=ro", uri=True)
-        meta = {k: json.loads(v) for k, v in db.execute("SELECT key,value FROM meta")}
+        ledger_path = a.out / "ledger.sqlite"
+        try:
+            db = sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True)
+            meta = {
+                k: json.loads(v) for k, v in db.execute("SELECT key,value FROM meta")
+            }
+        except (sqlite3.Error, json.JSONDecodeError, TypeError, ValueError):
+            raise SystemExit(f"Unreadable ledger at {ledger_path}") from None
         print(
             json.dumps(
                 {
